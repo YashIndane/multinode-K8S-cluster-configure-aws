@@ -20,8 +20,8 @@
        repo_gpgcheck: yes
        gpgcheck: yes
        gpgkey: 
-       -  "https://packages.cloud.google.com/yum/doc/yum-key.gpg"
-       -  "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
+       - "https://packages.cloud.google.com/yum/doc/yum-key.gpg"
+       - "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
 
 - name: "installing kubelet, kubeadm & kubectl"
   yum:
@@ -29,9 +29,9 @@
         disable_excludes: "kubernetes"
         state: present 
   loop:
-  -   { package_name: "kubelet" }
-  -   { package_name: "kubeadm" }
-  -   { package_name: "kubectl" }
+  - { package_name: "kubelet" }
+  - { package_name: "kubeadm" }
+  - { package_name: "kubectl" }
 
 - name: "starting and enabling kubelet"
   service:
