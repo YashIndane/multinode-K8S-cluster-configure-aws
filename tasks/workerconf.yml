@@ -29,9 +29,9 @@
         disable_excludes: "kubernetes"
         state: present 
   loop:
-  -   {  package_name: "kubelet"  }
-  -   {  package_name: "kubeadm"  }
-  -   {  package_name: "kubectl"  }
+  -   { package_name: "kubelet" }
+  -   { package_name: "kubeadm" }
+  -   { package_name: "kubectl" }
 
 - name: "starting and enabling kubelet"
   service:
@@ -95,4 +95,3 @@
   with_items:
       - "chmod +x /jc.sh"
       - "bash /jc.sh"
-

@@ -1,6 +1,5 @@
 ---
 # tasks file for k8s_cluster
-
 - include_tasks: masterconf.yml
   when: inventory_hostname in groups['kube_master']
 
