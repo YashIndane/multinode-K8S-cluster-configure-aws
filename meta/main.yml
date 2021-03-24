@@ -1,7 +1,7 @@
 galaxy_info:
-  author: your name
-  description: your role description
-  company: your company (optional)
+  author: Yash Indane
+  description: A role to configure Kubernetes cluster over AWS
+ 
 
   # If the issue tracker for your role is not on github, uncomment the
   # next line and provide a value
@@ -14,7 +14,7 @@ galaxy_info:
   # - GPL-3.0-only
   # - Apache-2.0
   # - CC-BY-4.0
-  license: license (GPL-2.0-or-later, MIT, etc)
+  license: MIT
 
   min_ansible_version: 2.1
 
@@ -26,7 +26,10 @@ galaxy_info:
   # If you don't wish to enumerate all versions for a particular platform, use 'all'.
   # To view available platforms and versions (or releases), visit:
   # https://galaxy.ansible.com/api/v1/platforms/
-  #
+    platforms:
+    - name: Linux
+      versions:
+       - any
   # platforms:
   # - name: Fedora
   #   versions:
