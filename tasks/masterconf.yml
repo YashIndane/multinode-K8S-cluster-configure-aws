@@ -1,0 +1,97 @@
+---
+# tasks file for k8s_master_conf
+- name: "installing docker"
+  package:
+        name: "docker"
+        state: present
+
+- name: "starting and enabling docker"
+  service:
+        enabled: yes
+        name: "docker"
+        state: started 
+
+- name: "configuring yum for kubeadm"
+  yum_repository:
+       name: "kubernetes"
+       description: "repo for kubernetes"
+       baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+       enabled: yes
+       repo_gpgcheck: yes
+       gpgcheck: yes
+       gpgkey: 
+       -  "https://packages.cloud.google.com/yum/doc/yum-key.gpg"
+       -  "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
+
+- name: "installing kubelet, kubeadm & kubectl"
+  yum:
+        name: "{{ item.package_name }}"
+        disable_excludes: "kubernetes"
+        state: present 
+  loop:
+  -   {  package_name: "kubelet"  }
+  -   {  package_name: "kubeadm"  }
+  -   {  package_name: "kubectl"  }
+
+- name: "starting and enabling kubelet"
+  service:
+        enabled: yes
+        name: "kubelet"
+        state: started
+
+- name: "pulling images ..."
+  shell:
+        cmd: "kubeadm config images pull"
+
+- name: "creating daemon.js"
+  file:
+       path: "/etc/docker/daemon.js"
+       state: touch
+
+- name: "changing docker driver to systemd"
+  blockinfile:
+       path: "/etc/docker/daemon.js"
+       block: |
+          {
+          "exec-opts":["native.cgroupdriver=systemd"]
+          }
+       state: present
+
+- name: "restarting docker"
+  service:
+       name: "docker"
+       state: restarted
+
+- name: "installing iproute-tc"
+  package:
+       name: "iproute-tc"
+       state: present
+
+- name: "creating bridge-nf-call-iptables file"
+  file:
+       path: "/proc/sys/net/bridge/bridge-nf-call-iptables"
+       state: touch
+
+- name: "configuring above file"
+  shell:
+       cmd: 'sudo echo "1" > /proc/sys/net/bridge/bridge-nf-call-iptables'
+
+- name: "initializing ..."
+  shell:
+       cmd: "{{ item.command }}"
+  loop:
+  - { command: "kubeadm init --pod-network-cidr={{ podcidr }} --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem" }
+  - { command: "mkdir -p $HOME/.kube" }
+  - { command: "sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config" }
+  - { command: "sudo chown $(id -u):$(id -g) $HOME/.kube/config" }
+  - { command: "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml" }
+
+- name: "creating and saving token"
+  shell:
+       cmd: "kubeadm token create --print-join-command > /jc.sh"
+
+- name: "fetching token from master" 
+  fetch:
+     src: "/jc.sh"
+     dest: "/"
+     flat: yes

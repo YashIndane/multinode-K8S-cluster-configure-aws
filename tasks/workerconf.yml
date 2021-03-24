@@ -1,0 +1,98 @@
+---
+# tasks file for k8s_worker_conf
+- name: "installing docker"
+  package:
+        name: "docker"
+        state: present
+
+- name: "starting and enabling docker"
+  service:
+        enabled: yes
+        name: "docker"
+        state: started 
+
+- name: "configuring yum for kubeadm"
+  yum_repository:
+       name: "kubernetes"
+       description: "repo for kubernetes"
+       baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+       enabled: yes
+       repo_gpgcheck: yes
+       gpgcheck: yes
+       gpgkey: 
+       -  "https://packages.cloud.google.com/yum/doc/yum-key.gpg"
+       -  "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
+
+- name: "installing kubelet, kubeadm & kubectl"
+  yum:
+        name: "{{ item.package_name }}"
+        disable_excludes: "kubernetes"
+        state: present 
+  loop:
+  -   {  package_name: "kubelet"  }
+  -   {  package_name: "kubeadm"  }
+  -   {  package_name: "kubectl"  }
+
+- name: "starting and enabling kubelet"
+  service:
+        enabled: yes
+        name: "kubelet"
+        state: started
+
+- name: "pulling images ..."
+  shell:
+        cmd: "kubeadm config images pull"
+
+- name: "creating daemon.js"
+  file:
+       path: "/etc/docker/daemon.js"
+       state: touch
+
+- name: "changing docker driver to systemd"
+  blockinfile:
+       path: "/etc/docker/daemon.js"
+       block: |
+          {
+          "exec-opts":["native.cgroupdriver=systemd"]
+          }
+       state: present
+
+- name: "restarting docker"
+  service:
+       name: "docker"
+       state: restarted
+
+- name: "installing iproute-tc"
+  package:
+       name: "iproute-tc"
+       state: present
+
+- name: "creating k8s.conf file"
+  file:
+       path: "/etc/sysctl.d/k8s.conf"
+       state: touch
+
+- name: "configuring ip tables..."
+  blockinfile:
+       path: "/etc/sysctl.d/k8s.conf"
+       block: |
+          net.bridge.bridge-nf-call-ip6tables=1
+          net.bridge.bridge-nf-call-iptables=1
+       state: present
+
+- name: "running sysctl command"
+  shell:
+      cmd: "sysctl --system"
+
+- name: "copying the token file"
+  copy:
+      src: "/jc.sh"
+      dest: "/"
+
+- name: "joining master ..."
+  shell:
+      cmd: "{{ item }}"
+  with_items:
+      - "chmod +x /jc.sh"
+      - "bash /jc.sh"
+
