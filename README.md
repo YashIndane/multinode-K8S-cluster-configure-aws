@@ -1,17 +1,25 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+A Ansible role to configure Kubernetes multinode cluster on AWS.
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Have atleast 3 EC-2 instances launched, So as to configure them as master and two slaves. Any number of slaves can be used. Use only Amazon Linux AMI to create the instances.The user that ansible is using to login to instances should be a IAM PowerUser.
+
+the master ip should be under `kube_master` group and the slave nodes under `kube_workers`. So make inventory accordingly
+
+Run this command 
+
+```
+chmod 400 <path-of-key-file>
+```
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+podcidr is the variable for pod-network-cidr
 
 Dependencies
 ------------
@@ -21,18 +29,40 @@ A list of other roles hosted on Galaxy should go here, plus any details in regar
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+create the setup.yml file like-
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+```
+- hosts: all
+  roles:
+  - role: "<path-of-role-folder>"
 
-License
--------
+```
 
-BSD
+create the ansible.cfg file like-
+
+```
+[defaults]
+host_key_checking = False
+roles = <path-of-role-folder>
+inventory = <path-of-inventory-file>
+ask_pass = False
+remote_user = ec2-user
+private_key_file = <path-of-key-file>
+[privilege_escalation]
+become = True
+become_method = sudo
+become_user = root
+become_ask_pass = False
+```
+
+set the roles path with the following -
+
+```
+ansible-playbook <path-of-setup.yml> --roles-path <path-of-role-folder>
+```
 
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Yash Indane
+Email: yashindane46@gmail.com
